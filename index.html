@@ -25,18 +25,16 @@
   <!-- Cena AR: IMAGEM flutuando (sem plano de fundo) -->
   <a-scene vr-mode-ui="enabled:false" embedded renderer="antialias:true; alpha:true" arjs="sourceType:webcam; debugUIEnabled:false; trackingMethod: best;">
     <a-marker preset="hiro" id="marker">
-      <!-- Troque o src abaixo para o caminho da sua imagem -->
-      <a-image id="imgProj"
-               visible="false"
-               src="./imagem.png"
-               position="0 0 0.02"
-               rotation="-90 0 0"
-               width="1.5"
-               height="1.0">
-      </a-image>
-    </a-marker>
-    <a-entity camera></a-entity>
-  </a-scene>
+  <a-entity
+    id="modelo3d"
+    gltf-model="./vovoturbo.glb"
+    position="0 0 0"
+    rotation="0 180 0"
+    scale="0.3 0.3 0.3"
+    visible="false">
+  </a-entity>
+</a-marker>
+
 
   <!-- Portão de senha -->
   <div id="gate">
