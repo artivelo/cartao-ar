@@ -5,9 +5,9 @@
   <title>Cartão</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- A-Frame + AR.js para usar o marcador Hiro e a câmera -->
+  <!-- A-Frame + AR.js -->
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.js"></script>
 
   <style>
     * {
@@ -34,16 +34,19 @@
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
       padding: 16px;
+      padding-top: max(16px, env(safe-area-inset-top));
       -webkit-font-smoothing: antialiased;
-      overflow: hidden;
+      overflow-x: hidden;
     }
 
     .shell {
       width: 100%;
       max-width: 420px;
+      margin: 10vh auto 0;
     }
 
     .card {
@@ -232,7 +235,24 @@
       max-width: 90%;
     }
 
-    /* Cena AR ocupa toda a tela */
+    .ar-warning {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 11;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      color: #f97373;
+      text-align: left;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .ar-warning.visible {
+      opacity: 1;
+    }
+
     .ar-scene-wrapper {
       width: 100%;
       height: 100%;
@@ -290,11 +310,17 @@
       </p>
     </div>
 
+    <div class="ar-warning" id="camera-warning">
+      Se a câmera não aparecer, abra este link no navegador do seu celular
+      (Safari ou Chrome). Alguns apps como WhatsApp/Instagram bloqueiam a câmera
+      em telas internas.
+    </div>
+
     <div class="ar-scene-wrapper">
       <a-scene
         embedded
         vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true"
+        renderer="alpha: true; antialias: true; precision: mediump;"
         arjs="sourceType: webcam; debugUIEnabled: false;"
       >
         <a-assets>
@@ -310,9 +336,8 @@
           ></video>
         </a-assets>
 
-        <!-- Marcador Hiro: o vídeo é projetado sobre ele -->
+        <!-- Marcador Hiro -->
         <a-marker preset="hiro">
-          <!-- Ajuste width/height/position/rotation se quiser mudar o tamanho/orientação -->
           <a-video
             src="#mensagemVideo"
             width="1.4"
@@ -336,6 +361,7 @@
     const lockScreen = document.getElementById("lock-screen");
     const unlockBtn = document.getElementById("unlock-btn");
     const arScreen = document.getElementById("ar-screen");
+    const cameraWarning = document.getElementById("camera-warning");
 
     function unlock() {
       const value = passwordInput.value.trim();
@@ -350,12 +376,15 @@
         // Mostra a tela AR em full screen
         arScreen.classList.add("is-active");
 
-        // Tenta iniciar o vídeo (como há clique no botão, conta como interação)
+        // Tenta iniciar o vídeo na superfície do marcador
         const vid = document.getElementById("mensagemVideo");
         if (vid) {
-          vid.play().catch(() => {
-            // Se não tocar de primeira, a pessoa ainda pode tocar na tela
-          });
+          vid.play().catch(() => {});
+        }
+
+        // Checa suporte básico de câmera
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          cameraWarning.classList.add("visible");
         }
       } else {
         errorEl.textContent = "Ops! Essa não é a senha.";
