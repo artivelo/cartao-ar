@@ -1,77 +1,301 @@
-<!doctype html>
-<html lang="pt-br">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>Cartão AR com Senha — Imagem Projetada</title>
-  <!-- A-Frame + AR.js (CDNs) -->
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+  <meta charset="UTF-8" />
+  <title>Cartão</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    html,body{margin:0;height:100%;font-family:system-ui,Arial}
-    #gate{position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;z-index:9999;color:#fff;padding:20px;text-align:center}
-    .panel{max-width:400px;width:100%;background:#0e0e12;padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.6)}
-    .panel h2{margin:0 0 10px;font-size:1.15rem}
-    .row{display:flex;gap:10px}
-    input[type=password]{flex:1;padding:11px;border-radius:8px;border:1px solid #333;background:#000;color:#fff}
-    button{background:#39f;border:0;padding:11px 14px;border-radius:8px;font-weight:700;cursor:pointer}
-    #tip{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#fff;padding:8px 12px;border-radius:999px;font-size:.9rem;z-index:5;display:none}
-    .note{margin-top:10px;font-size:.85rem;opacity:.8}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --glass-bg: rgba(15, 23, 42, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.16);
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --accent-start: #38bdf8;
+      --accent-end: #a855f7;
+      --error: #fb7185;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        sans-serif;
+      background:
+        radial-gradient(circle at top, #1f2937 0, #020617 45%, #000 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      padding: 22px 18px 20px;
+      border-radius: 22px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        0 26px 60px rgba(0, 0, 0, 0.85),
+        0 0 0 0.5px rgba(148, 163, 184, 0.18);
+      backdrop-filter: blur(26px) saturate(160%);
+      -webkit-backdrop-filter: blur(26px) saturate(160%);
+      overflow: hidden;
+
+      opacity: 0;
+      transform: translateY(14px) scale(0.97);
+      pointer-events: none;
+      transition:
+        opacity 0.35s ease-out,
+        transform 0.35s ease-out;
+    }
+
+    .card.is-active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.14), transparent 55%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .card-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .text {
+      font-size: 0.98rem;
+      line-height: 1.5;
+      color: var(--text-main);
+      margin-bottom: 18px;
+    }
+
+    .password-input {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background: rgba(15, 23, 42, 0.92);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease,
+        transform 0.15s ease;
+      margin-bottom: 12px;
+    }
+
+    .password-input::placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .password-input:focus {
+      border-color: rgba(56, 189, 248, 0.9);
+      box-shadow:
+        0 0 0 1px rgba(56, 189, 248, 0.8),
+        0 0 18px rgba(56, 189, 248, 0.4);
+      background: rgba(15, 23, 42, 1);
+      transform: translateY(-0.5px);
+    }
+
+    .btn-primary {
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font-size: 0.98rem;
+      font-weight: 500;
+      color: #020617;
+      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        0 0 18px rgba(56, 189, 248, 0.5),
+        0 0 34px rgba(168, 85, 247, 0.35);
+      transition:
+        transform 0.14s ease,
+        box-shadow 0.14s ease,
+        filter 0.14s ease;
+    }
+
+    .btn-primary::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.26), transparent 55%);
+      opacity: 0.9;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px) scale(0.975);
+      box-shadow:
+        0 0 10px rgba(56, 189, 248, 0.4),
+        0 0 20px rgba(168, 85, 247, 0.25);
+      filter: brightness(0.97);
+    }
+
+    .btn-primary:focus-visible {
+      outline: 2px solid rgba(56, 189, 248, 0.9);
+      outline-offset: 3px;
+    }
+
+    .error {
+      min-height: 1.2em;
+      font-size: 0.86rem;
+      color: var(--error);
+      margin-top: 6px;
+      transition: opacity 0.2s ease;
+      opacity: 0;
+    }
+
+    .error.has-text {
+      opacity: 1;
+    }
+
+    /* Segunda tela */
+    .instruction {
+      font-size: 0.98rem;
+      line-height: 1.5;
+      color: var(--text-main);
+    }
+
+    .video-wrapper {
+      margin-top: 18px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    video {
+      width: 100%;
+      display: block;
+      outline: none;
+      background: #020617;
+    }
+
+    /* Redução de movimento */
+    @media (prefers-reduced-motion: reduce) {
+      .card {
+        transition: none;
+        transform: none;
+      }
+      .btn-primary,
+      .password-input {
+        transition: none;
+      }
+    }
   </style>
 </head>
 <body>
-  <div id="tip">Aponte a câmera para o marcador no cartão</div>
+  <main class="shell">
+    <!-- TELA 1: SENHA -->
+    <section class="card is-active" id="lock-screen">
+      <div class="card-inner">
+        <p class="text">
+          Só quem sabe a senha pode ver o que tem aqui dentro.
+        </p>
 
-  <!-- Cena AR: IMAGEM flutuando (sem plano de fundo) -->
-  <a-scene vr-mode-ui="enabled:false" embedded renderer="antialias:true; alpha:true" arjs="sourceType:webcam; debugUIEnabled:false; trackingMethod: best;">
-    <a-marker preset="hiro" id="marker">
-  <a-entity
-    id="modelo3d"
-    gltf-model="./vovoturbo.glb"
-    position="0 0 0"
-    rotation="0 180 0"
-    scale="0.3 0.3 0.3"
-    visible="false">
-  </a-entity>
-</a-marker>
+        <input
+          id="password"
+          class="password-input"
+          type="text"
+          placeholder="Uma data especial ❣️"
+          autocomplete="off"
+          inputmode="numeric"
+        />
 
+        <button class="btn-primary" id="unlock-btn">Ver mensagem</button>
 
-  <!-- Portão de senha -->
-  <div id="gate">
-    <div class="panel">
-      <h2>Desbloquear</h2>
-      <p>Digite a senha (uma data especial) para revelar a imagem projetada sobre o cartão.</p>
-      <div class="row">
-        <input id="pw" type="password" placeholder="Senha (uma data especial)"/>
-        <button id="ok">Abrir</button>
+        <div id="error" class="error"></div>
       </div>
-      <div class="note">Dica: permita o uso da câmera quando o navegador pedir.</div>
-    </div>
-  </div>
+    </section>
+
+    <!-- TELA 2: INSTRUÇÃO DO HIRO (+ VÍDEO) -->
+    <section class="card" id="message-screen">
+      <div class="card-inner">
+        <p class="instruction">
+          Agora, mire a câmera no marcador Hiro que está no verso do cartão.
+        </p>
+
+        <div class="video-wrapper">
+          <video id="secretVideo" controls playsinline>
+            <!-- o vídeo deve estar no mesmo diretório deste HTML -->
+            <source src="mensagem.mp4" type="video/mp4" />
+            Seu navegador não suporta vídeo.
+          </video>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <script>
-    // ===== CONFIG =====
-    const PASSWORD = "29.09.2024"; // sua data especial (não é exibida na tela)
-    // ==================
+    // Senha correta no formato DDMMAAAA
+    const CORRECT_PASSWORD = "29092024";
 
-    const gate = document.getElementById('gate');
-    const btn  = document.getElementById('ok');
-    const pw   = document.getElementById('pw');
-    const tip  = document.getElementById('tip');
-    const img  = document.getElementById('imgProj');
+    const passwordInput = document.getElementById("password");
+    const errorEl = document.getElementById("error");
+    const lockScreen = document.getElementById("lock-screen");
+    const messageScreen = document.getElementById("message-screen");
+    const unlockBtn = document.getElementById("unlock-btn");
+    const video = document.getElementById("secretVideo");
 
-    function unlock(){
-      if (pw.value.trim() === PASSWORD){
-        img.setAttribute('visible', true);
-        gate.style.display = 'none';
-        tip.style.display = 'inline-block';
+    function unlock() {
+      const value = passwordInput.value.trim();
+
+      if (value === CORRECT_PASSWORD) {
+        errorEl.textContent = "";
+        errorEl.classList.remove("has-text");
+
+        // Transição suave entre as telas
+        lockScreen.classList.remove("is-active");
+        messageScreen.classList.add("is-active");
+
+        // Tenta dar play automático no vídeo (pode ser bloqueado em alguns navegadores)
+        if (video) {
+          video.play().catch(() => {});
+        }
       } else {
-        alert('Senha incorreta — tente novamente');
-        pw.focus();
+        errorEl.textContent = "Ops! Essa não é a senha.";
+        errorEl.classList.add("has-text");
       }
     }
-    btn.addEventListener('click', unlock);
-    pw.addEventListener('keydown', (e)=>{ if(e.key==='Enter') unlock(); });
+
+    unlockBtn.addEventListener("click", unlock);
+
+    // Enter também dispara o desbloqueio
+    passwordInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        unlock();
+      }
+    });
   </script>
 </body>
 </html>
