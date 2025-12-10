@@ -9,17 +9,17 @@
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
   <style>
-    /* RESET BÁSICO */
+    /* RESET E CSS GERAL */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
 
     body {
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background-color: transparent; /* FUNDAMENTAL PARA AR */
+      background-color: transparent; /* Importante para a câmera aparecer */
     }
 
-    /* === TELA DE SENHA (Cobre tudo inicialmente) === */
+    /* === TELA DE SENHA === */
     #lock-screen {
       position: fixed;
       top: 0; left: 0;
@@ -31,10 +31,9 @@
       justify-content: center;
       align-items: center;
       padding: 20px;
-      transition: opacity 0.8s ease, transform 0.8s ease;
+      transition: opacity 0.8s ease;
     }
 
-    /* CARD GLASSMORPHISM */
     .glass-card {
       background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(20px);
@@ -47,14 +46,6 @@
       max-width: 360px;
       text-align: center;
       color: #fff;
-      transform: translateY(0);
-      opacity: 0;
-      animation: slideIn 0.8s ease-out forwards;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     .glass-card p {
@@ -65,7 +56,6 @@
       line-height: 1.5;
     }
 
-    /* INPUT ESTILO IOS */
     input {
       width: 100%;
       padding: 16px;
@@ -82,39 +72,31 @@
 
     input:focus {
       border-color: #0A84FF;
-      box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.2);
       background: rgba(0, 0, 0, 0.5);
     }
-    
-    input::placeholder { color: rgba(255, 255, 255, 0.4); }
 
-    /* BOTÃO ESTILO IOS */
     button {
       width: 100%;
       padding: 16px;
       border-radius: 14px;
       border: none;
-      background: #0A84FF; /* Apple Blue */
+      background: #0A84FF;
       color: white;
       font-size: 17px;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.1s, box-shadow 0.3s;
       box-shadow: 0 4px 12px rgba(10, 132, 255, 0.4);
     }
 
-    button:active { transform: scale(0.96); }
-
     .error-msg {
       margin-top: 16px;
-      color: #FF453A; /* Apple Red */
+      color: #FF453A;
       font-size: 14px;
       opacity: 0;
-      height: 20px;
       transition: opacity 0.3s;
     }
 
-    /* === TELA DE INSTRUÇÃO (Pós-senha) === */
+    /* === TELA DE INSTRUÇÃO === */
     #ar-instruction {
       position: fixed;
       bottom: 40px;
@@ -122,33 +104,29 @@
       transform: translateX(-50%);
       width: 90%;
       max-width: 400px;
-      z-index: 500; /* Acima da câmera */
+      z-index: 500;
       text-align: center;
-      pointer-events: none; /* Deixa tocar na tela se precisar */
+      pointer-events: none;
       opacity: 0;
-      transition: opacity 1s ease 0.5s; /* Delay para aparecer suave */
+      transition: opacity 1s ease 0.5s;
     }
 
     .instruction-glass {
       background: rgba(20, 20, 20, 0.7);
       backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
       padding: 16px 20px;
       border-radius: 18px;
       border: 0.5px solid rgba(255,255,255,0.15);
       color: #fff;
       font-size: 15px;
       font-weight: 500;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
 
-    /* CLASSES JS */
+    /* Utilitários JS */
     .fade-out-screen {
       opacity: 0 !important;
-      transform: scale(1.1) !important;
       pointer-events: none;
     }
-
     .visible { opacity: 1 !important; }
   </style>
 </head>
@@ -158,11 +136,8 @@
   <div id="lock-screen">
     <div class="glass-card">
       <p>Só quem sabe a senha pode ver o que tem aqui dentro.</p>
-      
       <input type="text" id="passwordInput" placeholder="Uma data especial ❣️" inputmode="numeric" autocomplete="off">
-      
       <button id="btnUnlock">Ver mensagem</button>
-      
       <div class="error-msg" id="errorMsg">Ops! Essa não é a senha.</div>
     </div>
   </div>
@@ -185,7 +160,7 @@
         id="vid" 
         src="mensagem.mp4" 
         preload="auto" 
-        loop 
+        loop="true" 
         crossorigin="anonymous" 
         playsinline 
         webkit-playsinline>
@@ -195,8 +170,8 @@
     <a-marker preset="hiro" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5">
       <a-video 
         src="#vid" 
-        width="1.8" 
-        height="1" 
+        width="1.5" 
+        height="1.5" 
         position="0 0 0" 
         rotation="-90 0 0"
       ></a-video>
@@ -205,12 +180,9 @@
     <a-entity camera></a-entity>
   </a-scene>
 
-
   <script>
-    // Configurações
     const SENHA_OFICIAL = "29092024";
     
-    // Elementos
     const lockScreen = document.getElementById('lock-screen');
     const passInput = document.getElementById('passwordInput');
     const btnUnlock = document.getElementById('btnUnlock');
@@ -218,57 +190,40 @@
     const arInstruction = document.getElementById('ar-instruction');
     const video = document.getElementById('vid');
 
-    // Função de Desbloqueio
     function tentarDesbloquear() {
-      const senhaDigitada = passInput.value.trim();
-
-      if (senhaDigitada === SENHA_OFICIAL) {
-        // 1. Sucesso: Feedback visual
+      if (passInput.value.trim() === SENHA_OFICIAL) {
+        // Feedback visual e remoção da tela
         errorMsg.style.opacity = '0';
-        
-        // 2. Animação de saída da tela de senha
         lockScreen.classList.add('fade-out-screen');
         
-        // 3. Aguarda a animação (800ms) para remover do layout e liberar a câmera
         setTimeout(() => {
-          lockScreen.style.display = 'none'; // CRUCIAL: Remove a tela preta da frente
-          arInstruction.classList.add('visible'); // Mostra instrução
+          lockScreen.style.display = 'none'; // Remove completamente
+          arInstruction.classList.add('visible');
         }, 800);
 
-        // 4. Hack para iOS: Play no vídeo com interação do usuário (mudo primeiro)
+        // Inicia vídeo
         if(video) {
-          video.muted = true; // Necessário para chrome/safari mobile iniciarem
+          video.muted = true; 
           video.play().then(() => {
-            console.log("Video preparado.");
-            video.muted = false; // Tenta desmutar
-          }).catch(e => console.log("Erro autoplay:", e));
+            video.muted = false; // Tenta som
+            video.loop = true;   // Garante loop via JS também
+          }).catch(console.log);
         }
-
       } else {
-        // Erro
         errorMsg.style.opacity = '1';
-        
-        // Animação de "Shake" simples no input
         passInput.style.transform = "translateX(5px)";
         setTimeout(() => passInput.style.transform = "translateX(-5px)", 100);
         setTimeout(() => passInput.style.transform = "translateX(0)", 200);
       }
     }
 
-    // Event Listeners
     btnUnlock.addEventListener('click', tentarDesbloquear);
+    passInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tentarDesbloquear(); });
     
-    passInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') tentarDesbloquear();
-    });
-
-    // Correção para AR.js em alguns celulares (redimensiona a tela ao carregar)
+    // Fix resize AR.js
     window.addEventListener('load', () => {
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-      }, 500);
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 500);
     });
   </script>
-
 </body>
 </html>
