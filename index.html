@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <title>Cartão</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- A-Frame + AR.js para usar o marcador Hiro e a câmera -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -33,6 +38,7 @@
       justify-content: center;
       padding: 16px;
       -webkit-font-smoothing: antialiased;
+      overflow: hidden;
     }
 
     .shell {
@@ -179,31 +185,67 @@
       opacity: 1;
     }
 
-    /* Segunda tela */
-    .instruction {
-      font-size: 0.98rem;
-      line-height: 1.5;
-      color: var(--text-main);
-    }
+    /* ============================
+       TELA 2: AR COM CÂMERA + HIRO
+       ============================ */
 
-    .video-wrapper {
-      margin-top: 18px;
-      border-radius: 18px;
-      overflow: hidden;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      background: rgba(15, 23, 42, 0.9);
-    }
-
-    video {
+    .ar-screen {
+      position: fixed;
+      inset: 0;
       width: 100%;
-      display: block;
-      outline: none;
-      background: #020617;
+      height: 100%;
+      background: #000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease-out;
     }
 
-    /* Redução de movimento */
+    .ar-screen.is-active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .ar-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 18px 16px 32px;
+      z-index: 10;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .ar-overlay-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(15, 23, 42, 0.95), transparent 65%);
+      pointer-events: none;
+    }
+
+    .ar-overlay-text {
+      position: relative;
+      z-index: 11;
+      font-size: 0.96rem;
+      line-height: 1.4;
+      color: #e5e7eb;
+      max-width: 90%;
+    }
+
+    /* Cena AR ocupa toda a tela */
+    .ar-scene-wrapper {
+      width: 100%;
+      height: 100%;
+    }
+
+    .ar-scene-wrapper a-scene {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
     @media (prefers-reduced-motion: reduce) {
-      .card {
+      .card,
+      .ar-screen {
         transition: none;
         transform: none;
       }
@@ -215,7 +257,7 @@
   </style>
 </head>
 <body>
-  <main class="shell">
+  <main class="shell" id="shell-root">
     <!-- TELA 1: SENHA -->
     <section class="card is-active" id="lock-screen">
       <div class="card-inner">
@@ -237,24 +279,53 @@
         <div id="error" class="error"></div>
       </div>
     </section>
-
-    <!-- TELA 2: INSTRUÇÃO DO HIRO (+ VÍDEO) -->
-    <section class="card" id="message-screen">
-      <div class="card-inner">
-        <p class="instruction">
-          Agora, mire a câmera no marcador Hiro que está no verso do cartão.
-        </p>
-
-        <div class="video-wrapper">
-          <video id="secretVideo" controls playsinline>
-            <!-- o vídeo deve estar no mesmo diretório deste HTML -->
-            <source src="mensagem.mp4" type="video/mp4" />
-            Seu navegador não suporta vídeo.
-          </video>
-        </div>
-      </div>
-    </section>
   </main>
+
+  <!-- TELA 2: AR + CÂMERA EM TELA CHEIA -->
+  <div class="ar-screen" id="ar-screen">
+    <div class="ar-overlay">
+      <div class="ar-overlay-gradient"></div>
+      <p class="ar-overlay-text">
+        Agora, mire a câmera no marcador Hiro que está no verso do cartão.
+      </p>
+    </div>
+
+    <div class="ar-scene-wrapper">
+      <a-scene
+        embedded
+        vr-mode-ui="enabled: false"
+        renderer="logarithmicDepthBuffer: true"
+        arjs="sourceType: webcam; debugUIEnabled: false;"
+      >
+        <a-assets>
+          <!-- vídeo da mensagem; deve estar no mesmo diretório -->
+          <video
+            id="mensagemVideo"
+            src="mensagem.mp4"
+            preload="auto"
+            webkit-playsinline
+            playsinline
+            crossorigin="anonymous"
+            loop
+          ></video>
+        </a-assets>
+
+        <!-- Marcador Hiro: o vídeo é projetado sobre ele -->
+        <a-marker preset="hiro">
+          <!-- Ajuste width/height/position/rotation se quiser mudar o tamanho/orientação -->
+          <a-video
+            src="#mensagemVideo"
+            width="1.4"
+            height="0.79"
+            position="0 0 0"
+            rotation="0 0 0"
+          ></a-video>
+        </a-marker>
+
+        <a-entity camera></a-entity>
+      </a-scene>
+    </div>
+  </div>
 
   <script>
     // Senha correta no formato DDMMAAAA
@@ -263,9 +334,8 @@
     const passwordInput = document.getElementById("password");
     const errorEl = document.getElementById("error");
     const lockScreen = document.getElementById("lock-screen");
-    const messageScreen = document.getElementById("message-screen");
     const unlockBtn = document.getElementById("unlock-btn");
-    const video = document.getElementById("secretVideo");
+    const arScreen = document.getElementById("ar-screen");
 
     function unlock() {
       const value = passwordInput.value.trim();
@@ -274,13 +344,18 @@
         errorEl.textContent = "";
         errorEl.classList.remove("has-text");
 
-        // Transição suave entre as telas
+        // Esconde o card com a senha
         lockScreen.classList.remove("is-active");
-        messageScreen.classList.add("is-active");
 
-        // Tenta dar play automático no vídeo (pode ser bloqueado em alguns navegadores)
-        if (video) {
-          video.play().catch(() => {});
+        // Mostra a tela AR em full screen
+        arScreen.classList.add("is-active");
+
+        // Tenta iniciar o vídeo (como há clique no botão, conta como interação)
+        const vid = document.getElementById("mensagemVideo");
+        if (vid) {
+          vid.play().catch(() => {
+            // Se não tocar de primeira, a pessoa ainda pode tocar na tela
+          });
         }
       } else {
         errorEl.textContent = "Ops! Essa não é a senha.";
