@@ -1,206 +1,203 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Cartão</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta charset="UTF-8">
+  <title>Cartão Especial</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --glass-bg: rgba(15, 23, 42, 0.65); /* Mais escuro para leitura */
-      --glass-border: rgba(255, 255, 255, 0.16);
-      --text-main: #e5e7eb;
-      --accent-start: #38bdf8;
-      --accent-end: #a855f7;
-      --error: #fb7185;
-    }
+    /* RESET BÁSICO */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
 
     body {
-      font-family: system-ui, -apple-system, sans-serif;
-      /* O fundo deve ser transparente ou preto, mas a camera vai cobrir */
-      background-color: #000;
-      color: var(--text-main);
-      min-height: 100vh;
-      overflow: hidden; /* Evita rolagem na AR */
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: transparent; /* FUNDAMENTAL PARA AR */
     }
 
-    /* --- TELA DE SENHA --- */
-    .shell {
-      position: absolute;
+    /* === TELA DE SENHA (Cobre tudo inicialmente) === */
+    #lock-screen {
+      position: fixed;
       top: 0; left: 0;
       width: 100%;
       height: 100%;
-      z-index: 20; /* Fica acima de tudo inicialmente */
+      z-index: 9999;
+      background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at top, #1f2937 0, #000 100%);
-      transition: opacity 0.5s ease, visibility 0.5s;
+      align-items: center;
       padding: 20px;
+      transition: opacity 0.8s ease, transform 0.8s ease;
     }
 
-    .shell.hidden {
+    /* CARD GLASSMORPHISM */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      border-radius: 24px;
+      padding: 32px 24px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      color: #fff;
+      transform: translateY(0);
       opacity: 0;
-      visibility: hidden;
+      animation: slideIn 0.8s ease-out forwards;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .glass-card p {
+      font-size: 17px;
+      font-weight: 400;
+      margin-bottom: 24px;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.5;
+    }
+
+    /* INPUT ESTILO IOS */
+    input {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.3);
+      color: #fff;
+      font-size: 18px;
+      text-align: center;
+      outline: none;
+      margin-bottom: 16px;
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      border-color: #0A84FF;
+      box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.2);
+      background: rgba(0, 0, 0, 0.5);
+    }
+    
+    input::placeholder { color: rgba(255, 255, 255, 0.4); }
+
+    /* BOTÃO ESTILO IOS */
+    button {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      background: #0A84FF; /* Apple Blue */
+      color: white;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.3s;
+      box-shadow: 0 4px 12px rgba(10, 132, 255, 0.4);
+    }
+
+    button:active { transform: scale(0.96); }
+
+    .error-msg {
+      margin-top: 16px;
+      color: #FF453A; /* Apple Red */
+      font-size: 14px;
+      opacity: 0;
+      height: 20px;
+      transition: opacity 0.3s;
+    }
+
+    /* === TELA DE INSTRUÇÃO (Pós-senha) === */
+    #ar-instruction {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 400px;
+      z-index: 500; /* Acima da câmera */
+      text-align: center;
+      pointer-events: none; /* Deixa tocar na tela se precisar */
+      opacity: 0;
+      transition: opacity 1s ease 0.5s; /* Delay para aparecer suave */
+    }
+
+    .instruction-glass {
+      background: rgba(20, 20, 20, 0.7);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      padding: 16px 20px;
+      border-radius: 18px;
+      border: 0.5px solid rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 500;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    /* CLASSES JS */
+    .fade-out-screen {
+      opacity: 0 !important;
+      transform: scale(1.1) !important;
       pointer-events: none;
     }
 
-    .card {
-      width: 100%;
-      max-width: 400px;
-      padding: 24px;
-      border-radius: 22px;
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-      text-align: center;
-    }
-
-    .text { margin-bottom: 20px; font-size: 1rem; line-height: 1.5; }
-
-    .password-input {
-      width: 100%;
-      padding: 12px 16px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(0, 0, 0, 0.6);
-      color: #fff;
-      font-size: 1rem;
-      outline: none;
-      margin-bottom: 15px;
-      text-align: center;
-    }
-    
-    .password-input:focus { border-color: var(--accent-start); }
-
-    .btn-primary {
-      width: 100%;
-      border: none;
-      border-radius: 999px;
-      padding: 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #fff;
-      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
-    }
-
-    .error {
-      min-height: 20px;
-      color: var(--error);
-      font-size: 0.9rem;
-      margin-top: 10px;
-    }
-
-    /* --- TELA AR (UI) --- */
-    .ar-ui {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none; /* Deixa clicar na cena se precisar */
-      z-index: 10;
-      opacity: 0;
-      transition: opacity 1s ease;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 20px;
-    }
-
-    .ar-ui.visible { opacity: 1; }
-
-    .ar-overlay-box {
-      margin-top: 20px;
-      background: rgba(0, 0, 0, 0.6);
-      padding: 15px;
-      border-radius: 12px;
-      backdrop-filter: blur(10px);
-      pointer-events: auto;
-      text-align: center;
-    }
-
-    .ar-warning {
-      background: rgba(200, 50, 50, 0.8);
-      color: #fff;
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      text-align: center;
-      margin-bottom: 20px;
-      pointer-events: auto;
-    }
-
-    /* Ajuste essencial para AR.js não ser coberto */
-    a-scene {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-    }
-    
-    /* O vídeo da webcam é inserido pelo AR.js no body, z-index -2 geralmente */
+    .visible { opacity: 1 !important; }
   </style>
 </head>
+
 <body>
 
-  <main class="shell" id="lock-screen">
-    <div class="card">
-      <p class="text">🔒 Digite a senha para desbloquear a surpresa.</p>
+  <div id="lock-screen">
+    <div class="glass-card">
+      <p>Só quem sabe a senha pode ver o que tem aqui dentro.</p>
       
-      <input id="password" class="password-input" type="text" placeholder="Data especial (DDMMAAAA)" inputmode="numeric" />
+      <input type="text" id="passwordInput" placeholder="Uma data especial ❣️" inputmode="numeric" autocomplete="off">
       
-      <button class="btn-primary" id="unlock-btn">Desbloquear</button>
+      <button id="btnUnlock">Ver mensagem</button>
       
-      <div id="error" class="error"></div>
-    </div>
-  </main>
-
-  <div class="ar-ui" id="ar-ui">
-    <div class="ar-overlay-box">
-      <p>✨ Agora, aponte a câmera para o <b>marcador Hiro</b> no verso do cartão.</p>
-    </div>
-
-    <div class="ar-warning" id="camera-warning" style="display:none;">
-      ⚠️ Câmera bloqueada? Abra este site no <b>Safari</b> ou <b>Chrome</b>. O Instagram/WhatsApp bloqueia a câmera.
+      <div class="error-msg" id="errorMsg">Ops! Essa não é a senha.</div>
     </div>
   </div>
 
-  <a-scene
-    embedded
+  <div id="ar-instruction">
+    <div class="instruction-glass">
+      Agora, mire a câmera no marcador Hiro que está no verso do cartão. 📸
+    </div>
+  </div>
+
+  <a-scene 
+    embedded 
     arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
     renderer="logarithmicDepthBuffer: true; precision: mediump; alpha: true;"
     vr-mode-ui="enabled: false"
-    id="ar-scene"
+    id="scene"
   >
     <a-assets>
-      <video
-        id="mensagemVideo"
-        src="mensagem.mp4"
-        preload="auto"
-        webkit-playsinline
-        playsinline
-        loop
-        crossorigin="anonymous"
-      ></video>
+      <video 
+        id="vid" 
+        src="mensagem.mp4" 
+        preload="auto" 
+        loop 
+        crossorigin="anonymous" 
+        playsinline 
+        webkit-playsinline>
+      </video>
     </a-assets>
 
-    <a-marker preset="hiro" smooth="true">
-      <a-video
-        src="#mensagemVideo"
-        width="1.6"
-        height="0.9"
-        position="0 0 0"
+    <a-marker preset="hiro" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5">
+      <a-video 
+        src="#vid" 
+        width="1.8" 
+        height="1" 
+        position="0 0 0" 
         rotation="-90 0 0"
       ></a-video>
     </a-marker>
@@ -208,69 +205,70 @@
     <a-entity camera></a-entity>
   </a-scene>
 
+
   <script>
-    const CORRECT_PASSWORD = "29092024";
-    const passwordInput = document.getElementById("password");
-    const errorEl = document.getElementById("error");
-    const lockScreen = document.getElementById("lock-screen");
-    const unlockBtn = document.getElementById("unlock-btn");
-    const arUI = document.getElementById("ar-ui");
-    const videoEl = document.getElementById("mensagemVideo");
+    // Configurações
+    const SENHA_OFICIAL = "29092024";
+    
+    // Elementos
+    const lockScreen = document.getElementById('lock-screen');
+    const passInput = document.getElementById('passwordInput');
+    const btnUnlock = document.getElementById('btnUnlock');
+    const errorMsg = document.getElementById('errorMsg');
+    const arInstruction = document.getElementById('ar-instruction');
+    const video = document.getElementById('vid');
 
-    function unlock() {
-      const value = passwordInput.value.trim();
+    // Função de Desbloqueio
+    function tentarDesbloquear() {
+      const senhaDigitada = passInput.value.trim();
 
-      if (value === CORRECT_PASSWORD) {
-        // 1. Esconde a tela de senha
-        lockScreen.classList.add("hidden");
+      if (senhaDigitada === SENHA_OFICIAL) {
+        // 1. Sucesso: Feedback visual
+        errorMsg.style.opacity = '0';
         
-        // 2. Mostra a interface da AR
-        arUI.classList.add("visible");
-
-        // 3. Tenta dar play no vídeo (necessário interação do usuário)
-        if (videoEl) {
-          videoEl.play().then(() => {
-            console.log("Vídeo pronto para tocar no marcador");
-          }).catch(e => {
-            console.log("Autoplay bloqueado, mas tocará ao rastrear.", e);
-          });
-          // Se for iPhone, às vezes precisa mutar para iniciar
-          // videoEl.muted = false; 
-        }
-
-        // Verifica se está no navegador embutido (WhatsApp/Insta)
-        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        const isInApp = (userAgent.indexOf("Instagram") > -1) || (userAgent.indexOf("FBAN") > -1) || (userAgent.indexOf("FBAV") > -1);
+        // 2. Animação de saída da tela de senha
+        lockScreen.classList.add('fade-out-screen');
         
-        if (isInApp) {
-           document.getElementById("camera-warning").style.display = "block";
-        } else {
-           // Checagem genérica de câmera
-           navigator.mediaDevices.getUserMedia({ video: true })
-            .catch(() => {
-               document.getElementById("camera-warning").style.display = "block";
-            });
+        // 3. Aguarda a animação (800ms) para remover do layout e liberar a câmera
+        setTimeout(() => {
+          lockScreen.style.display = 'none'; // CRUCIAL: Remove a tela preta da frente
+          arInstruction.classList.add('visible'); // Mostra instrução
+        }, 800);
+
+        // 4. Hack para iOS: Play no vídeo com interação do usuário (mudo primeiro)
+        if(video) {
+          video.muted = true; // Necessário para chrome/safari mobile iniciarem
+          video.play().then(() => {
+            console.log("Video preparado.");
+            video.muted = false; // Tenta desmutar
+          }).catch(e => console.log("Erro autoplay:", e));
         }
 
       } else {
-        errorEl.textContent = "Senha incorreta. Tente novamente.";
-        passwordInput.value = "";
-        passwordInput.focus();
+        // Erro
+        errorMsg.style.opacity = '1';
+        
+        // Animação de "Shake" simples no input
+        passInput.style.transform = "translateX(5px)";
+        setTimeout(() => passInput.style.transform = "translateX(-5px)", 100);
+        setTimeout(() => passInput.style.transform = "translateX(0)", 200);
       }
     }
 
-    unlockBtn.addEventListener("click", unlock);
-
-    passwordInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") unlock();
-    });
+    // Event Listeners
+    btnUnlock.addEventListener('click', tentarDesbloquear);
     
-    // Pequeno hack para forçar o resize do AR.js ao carregar
+    passInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') tentarDesbloquear();
+    });
+
+    // Correção para AR.js em alguns celulares (redimensiona a tela ao carregar)
     window.addEventListener('load', () => {
-       setTimeout(() => {
-         window.dispatchEvent(new Event('resize'));
-       }, 500);
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 500);
     });
   </script>
+
 </body>
 </html>
