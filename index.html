@@ -208,51 +208,6 @@
       pointer-events: auto;
     }
 
-    .ar-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      padding: 18px 16px 32px;
-      z-index: 10;
-      display: flex;
-      align-items: flex-start;
-    }
-
-    .ar-overlay-gradient {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to bottom, rgba(15, 23, 42, 0.95), transparent 65%);
-      pointer-events: none;
-    }
-
-    .ar-overlay-text {
-      position: relative;
-      z-index: 11;
-      font-size: 0.96rem;
-      line-height: 1.4;
-      color: #e5e7eb;
-      max-width: 90%;
-    }
-
-    .ar-warning {
-      position: absolute;
-      bottom: 16px;
-      left: 16px;
-      right: 16px;
-      z-index: 11;
-      font-size: 0.8rem;
-      line-height: 1.4;
-      color: #f97373;
-      text-align: left;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .ar-warning.visible {
-      opacity: 1;
-    }
-
     .ar-scene-wrapper {
       width: 100%;
       height: 100%;
@@ -261,6 +216,53 @@
     .ar-scene-wrapper a-scene {
       width: 100% !important;
       height: 100% !important;
+    }
+
+    .ar-overlay-box {
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      max-width: min(92%, 420px);
+      padding: 10px 14px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.7),
+        0 0 0 0.4px rgba(148, 163, 184, 0.3);
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
+    }
+
+    .ar-overlay-text {
+      font-size: 0.9rem;
+      line-height: 1.4;
+      color: #e5e7eb;
+      text-align: left;
+    }
+
+    .ar-warning {
+      position: absolute;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 11;
+      max-width: min(92%, 420px);
+      font-size: 0.78rem;
+      line-height: 1.4;
+      color: #f97373;
+      text-align: center;
+      padding: 6px 10px;
+      background: rgba(15, 23, 42, 0.78);
+      border-radius: 999px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .ar-warning.visible {
+      opacity: 1;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -303,17 +305,15 @@
 
   <!-- TELA 2: AR + CÂMERA EM TELA CHEIA -->
   <div class="ar-screen" id="ar-screen">
-    <div class="ar-overlay">
-      <div class="ar-overlay-gradient"></div>
+    <div class="ar-overlay-box">
       <p class="ar-overlay-text">
         Agora, mire a câmera no marcador Hiro que está no verso do cartão.
       </p>
     </div>
 
     <div class="ar-warning" id="camera-warning">
-      Se a câmera não aparecer, abra este link no navegador do seu celular
-      (Safari ou Chrome). Alguns apps como WhatsApp/Instagram bloqueiam a câmera
-      em telas internas.
+      Se a câmera não aparecer, abra este link no Safari ou Chrome.  
+      Alguns apps (WhatsApp/Instagram) bloqueiam a câmera em telas internas.
     </div>
 
     <div class="ar-scene-wrapper">
